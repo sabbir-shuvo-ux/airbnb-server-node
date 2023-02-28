@@ -22,10 +22,10 @@ const upload = multer({ dest: "uploads/" });
 app.use(express.json());
 app.use(cookieParser());
 app.use("/uploads", express.static(__dirname + "/uploads"));
-mongoose.set("strictQuery", true);
 
 app.use(
   cors({
+    origin: ["http://localhost:5173", "http://localhost:4173"],
     credentials: true,
   })
 );
