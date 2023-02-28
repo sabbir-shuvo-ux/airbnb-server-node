@@ -30,6 +30,8 @@ app.use(
   })
 );
 
+const PORT = process.env.PORT || 5000;
+
 const tokenFromReq = (req) => {
   return new Promise((resolve, reject) => {
     jwt.verify(req.cookies.token, sceretJwtKey, {}, async (err, user) => {
@@ -327,9 +329,9 @@ app.get("/bookings", async (req, res) => {
 mongoose
   .connect(process.env.DB_URL)
   .then(() => {
-    app.listen(5000, () => {
+    app.listen(PORT, () => {
       console.log(
-        "Database is connected || " + "server runing on http://localhost:5000"
+        `Database is connected || server runing on http://localhost:${PORT}`
       );
     });
   })
