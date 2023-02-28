@@ -25,7 +25,11 @@ app.use("/uploads", express.static(__dirname + "/uploads"));
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:4173"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:4173",
+      "https://airbnbb.netlify.app",
+    ],
     credentials: true,
   })
 );
