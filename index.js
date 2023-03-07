@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const imgDownloader = require("image-downloader");
 const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 require("dotenv").config();
 
@@ -17,6 +18,13 @@ const app = express();
 
 const sceretJwtKey = "76bangladesh7sahjt767sa878";
 const upload = multer({ dest: "uploads/" });
+
+// cloudinary Configuration
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET,
+});
 
 // middleware
 app.use(express.json());
@@ -42,6 +50,16 @@ const tokenFromReq = (req) => {
       if (err) throw err;
 
       resolve(user);
+    });
+  });
+};
+
+// cloudinary
+const cloudinaryUrl = async (file) => {
+  return new Promise((resolve) => {
+    cloudinary.uploader.upload(file, (err, result) => {
+      if (err) return res.status(500).json("file upload err cloudinary");
+      resolve(result.secure_url);
     });
   });
 };
@@ -136,29 +154,37 @@ app.post("/logout", (req, res) => {
 app.post("/upload-by-link", async (req, res) => {
   const { link } = req.body;
 
-  const newName = "photo" + Date.now() + ".jpg";
+  // const newName = "photo" + Date.now() + ".jpg";
 
   await imgDownloader.image({
     url: link,
-    dest: __dirname + "/uploads/" + newName,
+    dest: __dirname + "/uploads/",
   });
 
-  res.json(newName);
+  const singleImg = await cloudinaryUrl(link);
+  res.json(singleImg);
 });
 
 // img upload useing multer
-app.post("/upload", upload.array("photos", 100), (req, res) => {
+app.post("/upload", upload.array("photos", 100), async (req, res) => {
   try {
     const uploadedFile = [];
-    for (let i = 0; i < req.files.length; i++) {
-      const { path, originalname } = req.files[i];
-      const parts = originalname.split(".");
-      const ext = parts[parts.length - 1];
-      const newPath = path + "." + ext;
-      fs.renameSync(path, newPath);
-      const removeDirName = "uploads/";
-      uploadedFile.push(newPath.substring(removeDirName.length));
+    const files = req.files;
+    for (const file of files) {
+      const { path } = file;
+      const newPath = await cloudinaryUrl(path);
+      uploadedFile.push(newPath);
     }
+    // for (let i = 0; i < req.files.length; i++) {
+    //   const { path, originalname } = req.files[i];
+    //   const parts = originalname.split(".");
+    //   const ext = parts[parts.length - 1];
+    //   const newPath = path + "." + ext;
+    //   fs.renameSync(path, newPath);
+    //   const removeDirName = "uploads/";
+    //   uploadedFile.push(newPath.substring(removeDirName.length));
+    // }
+
     res.status(200).json(uploadedFile);
   } catch (err) {
     res.status(500).json(err);
